@@ -1,0 +1,70 @@
+{
+  "metrics": {
+    "mae_kw": 16.119440398143926,
+    "rmse_kw": 20.084200946619447,
+    "mape_pct": 5.810708863973139,
+    "r2": 0.7132753842451367
+  },
+  "top_features": [
+    {
+      "feature": "load_roll_3",
+      "importance": 0.6787598133087158
+    },
+    {
+      "feature": "heating_load_kw",
+      "importance": 0.08278241008520126
+    },
+    {
+      "feature": "hour_cos",
+      "importance": 0.03671684116125107
+    },
+    {
+      "feature": "solar_radiation_wm2",
+      "importance": 0.026646999642252922
+    },
+    {
+      "feature": "hour",
+      "importance": 0.011173988692462444
+    },
+    {
+      "feature": "load_lag_1",
+      "importance": 0.011093859560787678
+    },
+    {
+      "feature": "hour_sin",
+      "importance": 0.00945816095918417
+    },
+    {
+      "feature": "annual_cos",
+      "importance": 0.009094621054828167
+    },
+    {
+      "feature": "day_of_week",
+      "importance": 0.008197464048862457
+    },
+    {
+      "feature": "load_lag_2",
+      "importance": 0.007874068804085255
+    },
+    {
+      "feature": "temperature_c",
+      "importance": 0.007350309286266565
+    },
+    {
+      "feature": "load_roll_168",
+      "importance": 0.007263307459652424
+    },
+    {
+      "feature": "load_roll_24",
+      "importance": 0.006593691185116768
+    },
+    {
+      "feature": "flexible_load_kw",
+      "importance": 0.0065491520799696445
+    },
+    {
+      "feature": "load_lag_24",
+      "importance": 0.006529402453452349
+    }
+  ]
+}
