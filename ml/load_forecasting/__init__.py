@@ -1,1 +1,0 @@
-"""AURORA load forecasting package."""
