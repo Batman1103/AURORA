@@ -58,11 +58,11 @@ aurora.db
 database/AURORA_Maitri_15min_Forecasting_Dataset.csv
 
 # ML/Data
-*.joblib
+
 *.pkl
 *.pickle
 *.h5
-*.model
+
 *.pth
 models/__pycache__/
 

@@ -13,15 +13,23 @@ class StationSimulator:
 
     def latest(self, station: str) -> pd.Series:
         key = station.lower()
-        subset = self._data[self._data["station"].str.lower() == key]
-        if subset.empty:
+        # If the dataset includes a `station` column, filter by it. Otherwise
+        # fall back to the full dataset (single-station Maitri dataset).
+        if "station" in self._data.columns:
+            subset = self._data[self._data["station"].str.lower() == key]
+            if subset.empty:
+                subset = self._data
+        else:
             subset = self._data
         return subset.iloc[-1]
 
     def recent(self, station: str, hours: int = 168) -> pd.DataFrame:
         key = station.lower()
-        subset = self._data[self._data["station"].str.lower() == key]
-        if subset.empty:
+        if "station" in self._data.columns:
+            subset = self._data[self._data["station"].str.lower() == key]
+            if subset.empty:
+                subset = self._data
+        else:
             subset = self._data
         return subset.tail(hours).copy()
 

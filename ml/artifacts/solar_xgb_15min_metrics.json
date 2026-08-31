@@ -1,0 +1,8 @@
+{
+  "target": "solar_available_kw",
+  "test_MAE_kW": 0.09558810254184079,
+  "test_RMSE_kW": 0.19552587764793888,
+  "rows": 664518,
+  "interval_minutes": 15,
+  "horizon_steps": 96
+}

@@ -1,0 +1,8 @@
+{
+  "target": "wind_available_kw",
+  "test_MAE_kW": 7.475485263434221,
+  "test_RMSE_kW": 20.243201902474684,
+  "rows": 664518,
+  "interval_minutes": 15,
+  "horizon_steps": 96
+}
