@@ -1,0 +1,16 @@
+{
+  "rows_total": 34943,
+  "train_rows": 24460,
+  "validation_rows": 5241,
+  "test_rows": 5242,
+  "validation": {
+    "MAE_kW": 3.0500553972278324,
+    "RMSE_kW": 3.8909609308296846
+  },
+  "test": {
+    "MAE_kW": 3.0715431394073227,
+    "RMSE_kW": 3.916887944578645
+  },
+  "interval_minutes": 15,
+  "horizon_steps": 96
+}

@@ -1,0 +1,7 @@
+{
+  "solver_version": "SCIP 10.0.0 [LP solver: SoPlex 8.0.0]",
+  "status": "OPTIMAL",
+  "objective_value": 185069.96180123463,
+  "total_fuel_litres": 0.0,
+  "rows": 96
+}

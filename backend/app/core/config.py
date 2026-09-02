@@ -11,9 +11,13 @@ class Settings:
     version: str = "1.0.0"
     root_dir: Path = ROOT_DIR
     ml_dir: Path = ROOT_DIR / "ml"
-    dataset_path: Path = ROOT_DIR / "ml" / "data" / "processed" / "station_energy.csv"
+    # Use the project-local Maitri 15-minute forecasting dataset
+    dataset_path: Path = ROOT_DIR / "database" / "AURORA_Maitri_15min_Forecasting_Dataset.csv"
     features_path: Path = ROOT_DIR / "ml" / "data" / "features" / "load_features.csv"
-    load_model_path: Path = ROOT_DIR / "ml" / "models" / "load_model.joblib"
+    # 15-minute trained model artifacts (preferred names)
+    load_model_path: Path = ROOT_DIR / "ml" / "models" / "load_xgb_15min.joblib"
+    solar_model_path: Path = ROOT_DIR / "ml" / "models" / "solar_xgb_15min.joblib"
+    wind_model_path: Path = ROOT_DIR / "ml" / "models" / "wind_xgb_15min.joblib"
     seed_fuel_litres: float = 218400.0
     seed_battery_soc: float = 72.0
     fuel_reserve_litres: float = 30000.0

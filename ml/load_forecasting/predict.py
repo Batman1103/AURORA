@@ -3,78 +3,89 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .model import LoadForecastModel
-from .preprocess import LAG_HOURS, add_time_features, FEATURES
+from .preprocess import FEATURES, add_time_features, LAG_STEPS
 
 
-def recursive_forecast(history: pd.DataFrame, model: LoadForecastModel, horizon: int) -> pd.DataFrame:
-    """Generate a recursive one-step-ahead forecast using the latest state.
+def make_feature_row(work: pd.DataFrame, ts: pd.Timestamp) -> pd.DataFrame:
+    row = work.iloc[-1].copy()
+    row["timestamp"] = ts
 
-    The method keeps lag features consistent by appending each prediction to the
-    temporary history. Exogenous variables for the future horizon must already
-    exist in `history`; the CLI therefore creates them from the final observations.
-    For a production build, pass an actual weather forecast here.
-    """
+    # For real operation, replace these persistence values with a weather forecast.
+    # The forecast service should supply the next 96 rows of weather/exogenous data.
+    for c in [
+        "temperature_c", "wind_speed_ms", "wind_direction_deg", "pressure_mslp",
+        "radiation_profile_value", "solar_availability"
+    ]:
+        row[c] = work[c].iloc[-1]
+
+    temp = pd.DataFrame([row])
+    temp = add_time_features(temp)
+
+    for lag in LAG_STEPS:
+        temp[f"load_lag_{lag}_15m"] = (
+            work["station_load_kw"].iloc[-lag]
+            if len(work) >= lag else work["station_load_kw"].iloc[0]
+        )
+
+    for window in (4, 16, 96):
+        temp[f"load_roll_{window}"] = work["station_load_kw"].tail(window).mean()
+
+    return temp
+
+
+def recursive_forecast(history: pd.DataFrame, model: LoadForecastModel,
+                       horizon: int = 96) -> pd.DataFrame:
     work = history.copy().sort_values("timestamp").reset_index(drop=True)
     work["timestamp"] = pd.to_datetime(work["timestamp"])
-    future_rows = []
 
+    if len(work) < 96:
+        raise ValueError("At least 96 historical 15-minute rows are required.")
+
+    output = []
     last_ts = work["timestamp"].iloc[-1]
-    last_weather = work.iloc[-1].copy()
 
     for step in range(1, horizon + 1):
-        ts = last_ts + pd.Timedelta(hours=step)
-        row = last_weather.copy()
+        ts = last_ts + pd.Timedelta(minutes=15 * step)
+        x = make_feature_row(work, ts)
+        pred = float(model.model.predict(x[FEATURES])[0])
+        pred = max(0.0, pred)
+
+        row = work.iloc[-1].copy()
         row["timestamp"] = ts
-
-        # Simple demo persistence for exogenous variables. Replace with real
-        # weather/operational forecasts before SIH finalization.
-        row["temperature_c"] = float(work["temperature_c"].iloc[-1])
-        row["wind_speed_mps"] = float(work["wind_speed_mps"].iloc[-1])
-        row["solar_radiation_wm2"] = float(work["solar_radiation_wm2"].iloc[-1])
-        row["humidity_pct"] = float(work["humidity_pct"].iloc[-1])
-        row["pressure_hpa"] = float(work["pressure_hpa"].iloc[-1])
-        row["occupancy"] = float(work["occupancy"].iloc[-1])
-        row["heating_load_kw"] = float(work["heating_load_kw"].iloc[-1])
-        row["lab_load_kw"] = float(work["lab_load_kw"].iloc[-1])
-        row["flexible_load_kw"] = float(work["flexible_load_kw"].iloc[-1])
-        row["load_kw"] = float(work["load_kw"].iloc[-1])
-
-        temp = pd.DataFrame([row])
-        temp = add_time_features(temp)
-        temp["load_lag_1"] = work["load_kw"].iloc[-1]
-        for lag in LAG_HOURS:
-            if lag == 1:
-                continue
-            temp[f"load_lag_{lag}"] = work["load_kw"].iloc[-lag] if len(work) >= lag else work["load_kw"].iloc[0]
-        for window in (3, 24, 168):
-            temp[f"load_roll_{window}"] = work["load_kw"].tail(window).mean()
-
-        prediction = float(model.model.predict(temp[FEATURES])[0])
-        row["load_kw"] = prediction
-        future_rows.append({"timestamp": ts, "forecast_load_kw": prediction})
+        row["station_load_kw"] = pred
         work = pd.concat([work, pd.DataFrame([row])], ignore_index=True)
 
-    return pd.DataFrame(future_rows)
+        output.append({
+            "timestamp": ts,
+            "forecast_load_kw": pred,
+        })
+
+    return pd.DataFrame(output)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate AURORA load forecast")
-    parser.add_argument("--data", type=Path, default=Path("data/processed/station_energy.csv"))
-    parser.add_argument("--model", type=Path, default=Path("models/load_model.joblib"))
-    parser.add_argument("--horizon", type=int, default=24)
-    parser.add_argument("--output", type=Path, default=Path("artifacts/load_forecast_24h.csv"))
-    args = parser.parse_args()
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--data", type=Path,
+                   default=Path("data/AURORA_Maitri_15min_Forecasting_Dataset.csv"))
+    p.add_argument("--model", type=Path,
+                   default=Path("models/load_xgb_15min.joblib"))
+    p.add_argument("--horizon", type=int, default=96)
+    p.add_argument("--output", type=Path,
+                   default=Path("artifacts/load_forecast_24h.csv"))
+    args = p.parse_args()
 
-    history = pd.read_csv(args.data, parse_dates=["timestamp"]).sort_values("timestamp")
+    history = pd.read_csv(args.data, parse_dates=["timestamp"])
     model = LoadForecastModel.load(args.model)
-    forecast = recursive_forecast(history.tail(168).copy(), model, args.horizon)
+    forecast = recursive_forecast(history.tail(200), model, args.horizon)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     forecast.to_csv(args.output, index=False)
     print(forecast.to_string(index=False))
-    print(f"Saved forecast to {args.output}")
+    print(f"Saved: {args.output}")
 
 
 if __name__ == "__main__":
